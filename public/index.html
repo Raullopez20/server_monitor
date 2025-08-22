@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard - Monitor de Servidores</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="image/icono.ico">
+
+    <!-- Fuentes modernas -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Iconos y librerías -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+    <!-- Librerías de gráficos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
+
+    <link href="styles.css" rel="stylesheet" />
+</head>
+<body>
+<!-- Fondo de partículas -->
+<div id="particles-js"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="logo animate__animated animate__fadeInDown">
+        <div class="logo-icon">
+            <img src="image/icono1.png" alt="ServerMon Logo" style="width:60px;height:48px;">
+        </div>
+        <div class="logo-text">
+            <span class="brand">ServerMon</span>
+            <small>v2.0 Pro</small>
+        </div>
+    </div>
+
+    <nav class="menu">
+        <ul>
+            <li class="menu-item active">
+                <i class="fa-solid fa-gauge-high"></i>
+                <span>Dashboard</span>
+                <div class="menu-indicator"></div>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="connection-status">
+            <div class="status-indicator online" id="connectionStatus"></div>
+            <span id="connectionText">Conectando...</span>
+        </div>
+        <div class="user-info">
+            <i class="fas fa-user-circle"></i>
+            <span id="currentUser">Usuario</span>
+        </div>
+    </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-left">
+            <button class="mobile-menu-btn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="breadcrumb">
+                <h1>Panel de Monitoreo</h1>
+                <p>Supervisión en tiempo real</p>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <div class="header-actions">
+                <button class="action-btn" id="refreshBtn" title="Actualizar">
+                    <i class="fa-solid fa-refresh"></i>
+                </button>
+                <button class="action-btn" id="logoutBtn" title="Cerrar sesión">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+                <div class="user-menu" id="userMenu">
+                    <img src="image/icono.png" alt="User" class="user-avatar">
+                    <span id="headerUser">Admin</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+        <div id="statusSummary" class="status-cards"></div>
+        <div class="last-update">
+            <i class="fa-solid fa-clock"></i>
+            <span id="lastUpdate">Actualizando...</span>
+        </div>
+    </div>
+
+    <!-- DASHBOARD CONTENT -->
+    <main class="dashboard">
+        <!-- Métricas principales -->
+        <section class="metrics-grid">
+            <div class="metric-card animate__animated animate__fadeInUp">
+                <div class="metric-header">
+                    <div class="metric-icon total">
+                        <i class="fa-solid fa-server"></i>
+                    </div>
+                </div>
+                <div class="metric-content">
+                    <h3 id="totalServers">0</h3>
+                    <p>Total Servidores</p>
+                </div>
+                <div class="metric-progress">
+                    <div class="progress-bar" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <div class="metric-card animate__animated animate__fadeInUp animate__delay-1s">
+                <div class="metric-header">
+                    <div class="metric-icon online">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+                <div class="metric-content">
+                    <h3 id="onlineServers">0</h3>
+                    <p>Online</p>
+                </div>
+                <div class="metric-progress">
+                    <div class="progress-bar online" style="width: 85%"></div>
+                </div>
+            </div>
+
+            <div class="metric-card animate__animated animate__fadeInUp animate__delay-2s">
+                <div class="metric-header">
+                    <div class="metric-icon offline">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </div>
+                </div>
+                <div class="metric-content">
+                    <h3 id="offlineServers">0</h3>
+                    <p>Offline</p>
+                </div>
+                <div class="metric-progress">
+                    <div class="progress-bar offline" style="width: 15%"></div>
+                </div>
+            </div>
+
+            <div class="metric-card animate__animated animate__fadeInUp animate__delay-3s">
+                <div class="metric-header">
+                    <div class="metric-icon latency">
+                        <i class="fa-solid fa-gauge"></i>
+                    </div>
+                </div>
+                <div class="metric-content">
+                    <h3 id="avgLatency">0ms</h3>
+                    <p>Latencia Media</p>
+                </div>
+                <div class="metric-progress">
+                    <div class="progress-bar latency" style="width: 60%"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Grid principal -->
+        <div class="dashboard-grid">
+            <!-- Servidores -->
+            <section class="card servers-section">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-solid fa-list"></i>
+                        <h2>Estado de Servidores</h2>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-sm primary" id="checkAllBtn">
+                            <i class="fa-solid fa-refresh"></i>
+                            Verificar Todo
+                        </button>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div id="serversGrid" class="servers-grid"></div>
+                </div>
+            </section>
+
+            <!-- Gráficos -->
+            <section class="card chart-section">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <h2>Distribución de Estado</h2>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color online"></div>
+                            <span>Online</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color offline"></div>
+                            <span>Offline</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="chart-container">
+                        <canvas id="pieChart"></canvas>
+                        <div class="chart-center">
+                            <div class="center-metric">
+                                <h3 id="uptimePercentage">0%</h3>
+                                <p>Uptime</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gráfico de latencia -->
+            <section class="card latency-chart-section">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <h2>Latencia en Tiempo Real</h2>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="chart-container">
+                        <canvas id="latencyChart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Toast de notificaciones -->
+    <div id="toastContainer" class="toast-container"></div>
+</div>
+
+<!-- SCRIPTS -->
+<script>
+    // Configuración de partículas
+    particlesJS("particles-js", {
+        particles: {
+            number: { value: 50, density: { enable: true, value_area: 800 } },
+            color: { value: "#6366f1" },
+            shape: { type: "circle" },
+            opacity: { value: 0.1, random: false },
+            size: { value: 3, random: true },
+            line_linked: {
+                enable: true,
+                distance: 150,
+                color: "#6366f1",
+                opacity: 0.1,
+                width: 1
+            },
+            move: {
+                enable: true,
+                speed: 2,
+                direction: "none",
+                random: false,
+                straight: false,
+                out_mode: "out",
+                bounce: false
+            }
+        },
+        interactivity: {
+            detect_on: "canvas",
+            events: {
+                onhover: { enable: true, mode: "repulse" },
+                onclick: { enable: true, mode: "push" },
+                resize: true
+            }
+        },
+        retina_detect: true
+    });
+
+    // Variables globales
+    let socket;
+    let pieChart, latencyChart;
+    let latencyData = [];
+    let isAuthenticated = false;
+    let currentUser = null;
+
+    // Verificar autenticación al cargar
+    async function checkAuthentication() {
+        try {
+            const response = await fetch('/auth/check', {
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.authenticated) {
+                    isAuthenticated = true;
+                    currentUser = data.user;
+                    document.getElementById('currentUser').textContent = currentUser;
+                    document.getElementById('headerUser').textContent = currentUser;
+
+                    // Inicializar socket después de verificar autenticación
+                    initializeSocket();
+                    initCharts();
+                    return true;
+                }
+            }
+
+            // No autenticado, redirigir al login
+            window.location.href = '/login';
+            return false;
+        } catch (error) {
+            console.error('Error verificando autenticación:', error);
+            window.location.href = '/login';
+            return false;
+        }
+    }
+
+    // Inicializar socket con autenticación
+    function initializeSocket() {
+        socket = io({
+            withCredentials: true,
+            autoConnect: true
+        });
+
+        socket.on('connect', () => {
+            console.log('Conectado al servidor');
+            document.getElementById('connectionStatus').className = 'status-indicator online';
+            document.getElementById('connectionText').textContent = 'Conectado';
+            showToast('Conectado al servidor', 'success');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Desconectado del servidor');
+            document.getElementById('connectionStatus').className = 'status-indicator offline';
+            document.getElementById('connectionText').textContent = 'Desconectado';
+            showToast('Desconectado del servidor', 'error');
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Error de conexión:', error);
+            document.getElementById('connectionStatus').className = 'status-indicator offline';
+            document.getElementById('connectionText').textContent = 'Error de conexión';
+
+            // Si el error es de autenticación, redirigir al login
+            if (error.message === 'Authentication error') {
+                window.location.href = '/login';
+            }
+        });
+
+        socket.on('servers-update', ({ servers }) => {
+            updateServers(servers);
+            updateMetrics(servers);
+        });
+
+        socket.on('server-state-change', (event) => {
+            const message = `${event.server} está ahora ${event.status === 'recovered' ? 'online' : 'offline'}`;
+            const type = event.status === 'recovered' ? 'success' : 'error';
+            showToast(message, type);
+        });
+    }
+
+    // Inicialización de gráficos
+    function initCharts() {
+        // Gráfico de dona
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        pieChart = new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Online', 'Offline'],
+                datasets: [{
+                    data: [0, 0],
+                    backgroundColor: ['#22c55e', '#ef4444'],
+                    borderWidth: 0,
+                    cutout: '80%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleColor: '#e2e8f0',
+                        bodyColor: '#e2e8f0',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        cornerRadius: 8
+                    }
+                }
+            }
+        });
+
+        // Gráfico de latencia
+        const latencyCtx = document.getElementById('latencyChart').getContext('2d');
+        latencyChart = new Chart(latencyCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Latencia Promedio',
+                    data: [],
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleColor: '#e2e8f0',
+                        bodyColor: '#e2e8f0',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        display: false,
+                        grid: { display: false }
+                    },
+                    y: {
+                        display: true,
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.1)',
+                            borderDash: [5, 5]
+                        },
+                        ticks: {
+                            color: '#94a3b8',
+                            font: { size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type} animate__animated animate__slideInRight`;
+        toast.innerHTML = `
+            <div class="toast-content">
+                <i class="fa-solid fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            </div>
+            <button class="toast-close"><i class="fa-solid fa-times"></i></button>
+        `;
+
+        document.getElementById('toastContainer').appendChild(toast);
+
+        toast.querySelector('.toast-close').addEventListener('click', () => {
+            toast.classList.add('animate__slideOutRight');
+            setTimeout(() => toast.remove(), 500);
+        });
+
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.classList.add('animate__slideOutRight');
+                setTimeout(() => toast.remove(), 500);
+            }
+        }, 5000);
+    }
+
+    function updateMetrics(servers) {
+        const total = Object.keys(servers).length;
+        const online = Object.values(servers).filter(s => s.online).length;
+        const offline = total - online;
+        const latencies = Object.values(servers).filter(s => s.latency !== null).map(s => s.latency);
+        const avgLatency = latencies.length > 0 ? Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length) : 0;
+        const uptimePercentage = total > 0 ? Math.round((online / total) * 100) : 0;
+
+        // Actualizar métricas
+        document.getElementById('totalServers').textContent = total;
+        document.getElementById('onlineServers').textContent = online;
+        document.getElementById('offlineServers').textContent = offline;
+        document.getElementById('avgLatency').textContent = avgLatency + 'ms';
+        document.getElementById('uptimePercentage').textContent = uptimePercentage + '%';
+
+        // Actualizar status bar
+        document.getElementById('statusSummary').innerHTML = `
+            <div class="status-card total">
+                <div class="status-icon">
+                    <i class="fa-solid fa-server"></i>
+                </div>
+                <div class="status-info">
+                    <span class="status-value">${total}</span>
+                    <span class="status-label">Total</span>
+                </div>
+            </div>
+            <div class="status-card online">
+                <div class="status-icon">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div class="status-info">
+                    <span class="status-value">${online}</span>
+                    <span class="status-label">Online</span>
+                </div>
+            </div>
+            <div class="status-card offline">
+                <div class="status-icon">
+                    <i class="fa-solid fa-circle-xmark"></i>
+                </div>
+                <div class="status-info">
+                    <span class="status-value">${offline}</span>
+                    <span class="status-label">Offline</span>
+                </div>
+            </div>
+        `;
+
+        // Actualizar gráficos
+        if (pieChart) {
+            pieChart.data.datasets[0].data = [online, offline];
+            pieChart.update();
+        }
+
+        // Actualizar gráfico de latencia
+        const now = new Date().toLocaleTimeString();
+        latencyData.push({ time: now, latency: avgLatency });
+        if (latencyData.length > 20) latencyData.shift();
+
+        if (latencyChart) {
+            latencyChart.data.labels = latencyData.map(d => d.time);
+            latencyChart.data.datasets[0].data = latencyData.map(d => d.latency);
+            latencyChart.update();
+        }
+
+        // Actualizar timestamp
+        document.getElementById('lastUpdate').textContent = `Última actualización: ${now}`;
+    }
+
+    function updateServers(servers) {
+        const grid = document.getElementById('serversGrid');
+        grid.innerHTML = '';
+
+        for (const [name, data] of Object.entries(servers)) {
+            const serverCard = document.createElement('div');
+            serverCard.className = `server-card ${data.online ? 'online' : 'offline'} animate__animated animate__fadeInUp`;
+
+            serverCard.innerHTML = `
+                <div class="server-header">
+                    <div class="server-info">
+                        <h3>${name}</h3>
+                        <span class="server-ip">${data.ip}</span>
+                    </div>
+                    <div class="server-status">
+                        <div class="status-indicator ${data.online ? 'online' : 'offline'}"></div>
+                        <span class="status-text">${data.online ? 'Online' : 'Offline'}</span>
+                    </div>
+                </div>
+                <div class="server-metrics">
+                    <div class="metric">
+                        <i class="fa-solid fa-gauge"></i>
+                        <span class="metric-value">${data.latency !== null ? data.latency + 'ms' : '—'}</span>
+                        <span class="metric-label">Latencia</span>
+                    </div>
+                    <div class="metric">
+                        <i class="fa-solid fa-clock"></i>
+                        <span class="metric-value">99.9%</span>
+                        <span class="metric-label">Uptime</span>
+                    </div>
+                </div>
+                <div class="server-actions">
+                    <button class="btn-action" onclick="pingServer('${name}')" title="Ping">
+                        <i class="fa-solid fa-wifi"></i>
+                    </button>
+                    <button class="btn-action" onclick="showServerDetails('${name}')" title="Detalles">
+                        <i class="fa-solid fa-info-circle"></i>
+                    </button>
+                </div>
+            `;
+
+            grid.appendChild(serverCard);
+        }
+    }
+
+    function pingServer(serverName) {
+        showToast(`Haciendo ping a ${serverName}...`, 'info');
+
+        fetch(`/api/ping/${serverName}`, {
+            method: 'POST',
+            credentials: 'include'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const status = data.result.online ? 'online' : 'offline';
+                    const latency = data.result.latency ? ` (${data.result.latency}ms)` : '';
+                    showToast(`${serverName} está ${status}${latency}`, data.result.online ? 'success' : 'error');
+                } else {
+                    showToast(`Error al verificar ${serverName}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast(`Error de conexión al verificar ${serverName}`, 'error');
+            });
+    }
+
+    function showServerDetails(serverName) {
+        showToast(`Mostrando detalles de ${serverName}`, 'info');
+    }
+
+    // Logout seguro
+    async function logout() {
+        try {
+            const response = await fetch('/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                // Desconectar socket
+                if (socket) {
+                    socket.disconnect();
+                }
+                // Limpiar datos locales
+                isAuthenticated = false;
+                currentUser = null;
+                // Redirigir al login
+                window.location.href = '/login';
+            } else {
+                showToast('Error al cerrar sesión', 'error');
+            }
+        } catch (error) {
+            console.error('Error en logout:', error);
+            // Forzar redirección en caso de error
+            window.location.href = '/login';
+        }
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', async function() {
+        // Verificar autenticación antes de inicializar
+        const authenticated = await checkAuthentication();
+        if (!authenticated) {
+            return; // Ya redirigido al login
+        }
+
+        // Botón refresh
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            if (socket && isAuthenticated) {
+                socket.emit('manual-check');
+                showToast('Actualizando servidores...', 'info');
+            }
+        });
+
+        // Botón check all
+        document.getElementById('checkAllBtn').addEventListener('click', () => {
+            if (socket && isAuthenticated) {
+                socket.emit('manual-check');
+                showToast('Verificando todos los servidores...', 'info');
+            }
+        });
+
+        // Botón logout
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+
+        // Menu responsive
+        const menuBtn = document.querySelector('.mobile-menu-btn');
+        const sidebar = document.querySelector('.sidebar');
+
+        if (menuBtn) {
+            menuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+            });
+        }
+
+        // Verificar autenticación periódicamente (cada 5 minutos)
+        setInterval(async () => {
+            try {
+                const response = await fetch('/auth/check', {
+                    credentials: 'include'
+                });
+
+                if (!response.ok || !(await response.json()).authenticated) {
+                    console.log('Sesión expirada, redirigiendo al login');
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Error verificando sesión:', error);
+            }
+        }, 5 * 60 * 1000);
+    });
+
+    // Manejar errores de red
+    window.addEventListener('online', () => {
+        showToast('Conexión restaurada', 'success');
+        if (socket && !socket.connected) {
+            socket.connect();
+        }
+    });
+
+    window.addEventListener('offline', () => {
+        showToast('Sin conexión a internet', 'warning');
+    });
+
+    // Atajos de teclado
+    document.addEventListener('keydown', function(e) {
+        // F5 para refresh (solo si está autenticado)
+        if (e.key === 'F5' && isAuthenticated) {
+            e.preventDefault();
+            if (socket) {
+                socket.emit('manual-check');
+                showToast('Actualizando servidores...', 'info');
+            }
+        }
+
+        // Ctrl+L para logout
+        if (e.ctrlKey && e.key === 'l') {
+            e.preventDefault();
+            logout();
+        }
+    });
+
+    // Detectar intentos de acceso no autorizado
+    window.addEventListener('beforeunload', function() {
+        if (socket) {
+            socket.disconnect();
+        }
+    });
+
+    // Manejar visibilidad de la página
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            console.log('Página oculta');
+        } else {
+            console.log('Página visible, verificando conexión');
+            if (isAuthenticated && socket && !socket.connected) {
+                socket.connect();
+            }
+        }
+    });
+</script>
+</body>
+</html>
